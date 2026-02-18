@@ -5,6 +5,7 @@ import common.Person;
 import common.PersonConverter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*
 Задача 4
@@ -22,6 +23,10 @@ public class Task4 {
   }
 
   public List<ApiPersonDto> convert(List<Person> persons) {
-    return new ArrayList<>();
+    List <ApiPersonDto> convertedPersons = persons.stream()
+        .map(person -> personConverter.convert(person)) // Идея здесь рекомендует писать personConverter::convert, есть ли в этом смысл?
+        .collect(Collectors.toCollection(ArrayList::new));
+    return convertedPersons;
+
   }
 }
