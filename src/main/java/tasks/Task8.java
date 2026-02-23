@@ -4,6 +4,7 @@ import common.Person;
 import common.PersonService;
 import common.PersonWithResumes;
 import common.Resume;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.HashSet;
@@ -25,20 +26,10 @@ public class Task8 {
     Set<Resume> resumes = personService.findResumes(new HashSet<>(persons.stream()
         .map(Person::id)
         .collect(Collectors.toSet())));
-    Map<Integer, Set<Resume>> mapResumes= new HashMap<>(); // Создаем мапу, где ключ id персоны, а значение - множество ее резюме
-    for (Resume resume: resumes){
-      if(!mapResumes.containsKey(resume.personId())){
-        mapResumes.put(resume.personId(),new HashSet<>(Set.of(resume)));
-      }
-      else{
-        Set<Resume> personResumes=mapResumes.get(resume.personId());
-        personResumes.add(resume);
-        mapResumes.put(resume.personId(),personResumes);
-      }
-    }
-    Set<PersonWithResumes> enrichedPersonsWithResumes = persons.stream()
-        .map(person->new PersonWithResumes(person,mapResumes.getOrDefault(person.id(),Set.of())))
-        .collect(Collectors.toSet());
-    return enrichedPersonsWithResumes;
+    Map<Integer, Set<Resume>> mapResumes = resumes.stream().collect(Collectors.groupingBy(Resume::personId, Collectors.toSet())); // Создаем мапу, где ключ id персоны, а значение - множество ее резюме
+    //Теперь мапу создаем стримом с groupingBy вместо цикла с условием
+    return persons.stream()
+        .map(person -> new PersonWithResumes(person, mapResumes.getOrDefault(person.id(), Set.of())))
+        .collect(Collectors.toSet()); // перенес сразу в ретурн
   }
 }

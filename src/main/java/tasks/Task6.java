@@ -20,12 +20,10 @@ public class Task6 {
                                                   Collection<Area> areas) {
     Map<Integer, String> areaNames = areas.stream()
         .collect(Collectors.toMap(Area::getId, Area::getName));
-
-    Set<String> personDescriptions = persons.stream()
+    return persons.stream()
         .flatMap(person -> personAreaIds.get(person.id())
             .stream()
-            .map(area -> person.firstName() + " - " + areaNames.get(area))) // брутфорс, хочется использовать joining, но я не понял как
-        .collect(Collectors.toSet());
-    return personDescriptions;
+            .map(area -> person.firstName() + " - " + areaNames.get(area)))
+        .collect(Collectors.toSet());// добавил сразу в ретурн
   }
 }

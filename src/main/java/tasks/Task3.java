@@ -2,10 +2,7 @@ package tasks;
 
 import common.Person;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /*
@@ -15,10 +12,9 @@ import java.util.stream.Collectors;
 public class Task3 {
 
   public static List<Person> sort(Collection<Person> persons) {
-    ArrayList<Person> sortedList = persons.stream().sorted(Comparator.comparing(Person::secondName)
-            .thenComparing(Person::firstName)
-            .thenComparing(Person::createdAt))
-        .collect(Collectors.toCollection(ArrayList::new));
-    return sortedList;
+    return persons.stream().sorted(Comparator.comparing(Person::secondName, Comparator.nullsLast(String::compareTo)) // добавил компаратор для обработки null значений
+            .thenComparing(Person::firstName, Comparator.nullsLast(String::compareTo))// попробовал в тесте заменить одно из имен на null и поймал java.lang.NullPointerException
+            .thenComparing(Person::createdAt)) // избавился от лишней переменной и изменил коллектор на toList
+        .toList();
   }
 }
