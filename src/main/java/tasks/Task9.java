@@ -1,10 +1,10 @@
 package tasks;
 
 import common.Person;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.Objects;
 
 /*
 Далее вы увидите код, который специально написан максимально плохо.
@@ -26,64 +27,48 @@ public class Task9 {
   // Костыль, эластик всегда выдает в топе "фальшивую персону".
   // Конвертируем начиная со второй
   public List<String> getNames(List<Person> persons) {
-    if (persons.size() == 0) {
-      return Collections.emptyList();
-    }
-    persons.remove(0);
-    return persons.stream().map(Person::firstName).collect(Collectors.toList());
+    return persons.stream()// условие не нужно, стрим и так безопасно обрабатывает крайние случаи
+        .skip(1)
+        .map(Person::firstName)
+        .collect(Collectors.toList()); // исправлен костыль, теперь стрим самостоятельно скипает первую персону
   }
 
   // Зачем-то нужны различные имена этих же персон (без учета фальшивой разумеется)
   public Set<String> getDifferentNames(List<Person> persons) {
-    return getNames(persons).stream().distinct().collect(Collectors.toSet());
+    return new HashSet<>(getNames(persons)); // distinct не нужен потому что множество и так хранит только уникальные элементы P.S. стрим избыточен, лучше конструктором
   }
 
   // Тут фронтовая логика, делаем за них работу - склеиваем ФИО
   public String convertPersonToString(Person person) {
-    String result = "";
-    if (person.secondName() != null) {
-      result += person.secondName();
-    }
-
-    if (person.firstName() != null) {
-      result += " " + person.firstName();
-    }
-
-    if (person.secondName() != null) {
-      result += " " + person.secondName();
-    }
-    return result;
+    return Stream.of(person.secondName(), person.firstName(), person.middleName())
+        .filter(Objects::nonNull)//изменил фильтр, теперь логика должна сохраняться
+        .collect(Collectors.joining(" "));// использование потоков и более короткая запись, наконец впихнул joining
   }
 
   // словарь id персоны -> ее имя
   public Map<Integer, String> getPersonNames(Collection<Person> persons) {
-    Map<Integer, String> map = new HashMap<>(1);
-    for (Person person : persons) {
-      if (!map.containsKey(person.id())) {
-        map.put(person.id(), convertPersonToString(person));
-      }
-    }
-    return map;
+    return persons.stream().filter(Objects::nonNull)// на всякий случай проверку на нулл
+        .collect(Collectors.toMap(Person::id, Person::firstName, (oldKey, newKey) -> oldKey)); // использование потоков
+    // добавил обработку случаев повтора ключа (по примеру лекции)
   }
 
   // есть ли совпадающие в двух коллекциях персоны?
   public boolean hasSamePersons(Collection<Person> persons1, Collection<Person> persons2) {
-    boolean has = false;
-    for (Person person1 : persons1) {
-      for (Person person2 : persons2) {
-        if (person1.equals(person2)) {
-          has = true;
-        }
-      }
-    }
-    return has;
+    // теперь используем интерфейс
+    Set<Person> personsSet1 = new HashSet<>(persons1); // тратим память в пользу скорости. Не стал проверять какая из коллекций больше для преобразования в сет, т.к не очень уместно
+    return persons2.stream().anyMatch(personsSet1::contains); // вариант с использованием anyMatch
+    // следующие строки старый вариант с early return
+//    for (Person person2 : persons2) {
+//      if(personSet1.contains(person2)) {
+//        return true; // early return
+//      }
+//    }
+//    return false;
   }
 
   // Посчитать число четных чисел
   public long countEven(Stream<Integer> numbers) {
-    count = 0;
-    numbers.filter(num -> num % 2 == 0).forEach(num -> count++);
-    return count;
+    return numbers.filter(num -> num % 2 == 0).count(); // теперь не храним лишнюю переменную count
   }
 
   // Загадка - объясните почему assert тут всегда верен
@@ -93,6 +78,9 @@ public class Task9 {
     List<Integer> snapshot = new ArrayList<>(integers);
     Collections.shuffle(integers);
     Set<Integer> set = new HashSet<>(integers);
-    assert snapshot.toString().equals(set.toString());
+    assert snapshot.toString().equals(set.toString()); // есть 2 предположения: 1 - из-за пула строк. 2 - из-за того,
+    // что стандартная хеш функция сортирует их по бакетам так, что они получаются "отсортированными"
+    // стандартная хеш функция возвращает для этих чисел хеш коды равные им самим, а так же хеш сет создаем на основе листа (не до конца понял почему это влияет), а не заполняем существующий
+    // насколько я понял, в зависимости от jvm может работать или не работать
   }
 }
